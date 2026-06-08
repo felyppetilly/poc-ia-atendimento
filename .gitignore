@@ -1,0 +1,27 @@
+# Segredos — NUNCA versionar
+.env
+.env.*
+!.env.example
+
+# Dependências
+node_modules/
+
+# Build / transpile
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.idea/
+
+# Tooling do Claude/BMad (skills reinstaláveis — 21MB, não fazem parte do produto)
+.claude/
