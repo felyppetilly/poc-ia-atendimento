@@ -1,0 +1,19 @@
+# Reinstalado dentro da imagem via `npm ci`
+node_modules/
+
+# Segredos — nunca entram na imagem (vão na tela Environment do Easypanel)
+.env
+.env.*
+!.env.example
+
+# Não fazem parte do runtime do app
+.git/
+.claude/
+_bmad/
+_bmad-output/
+design-artifacts/
+docs/
+dist/
+build/
+*.log
+logs/
