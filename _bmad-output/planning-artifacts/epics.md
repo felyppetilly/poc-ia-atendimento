@@ -101,7 +101,7 @@ So that eu tenha uma base implantável na VPS sobre a qual todas as funcionalida
 **Given** o serviço em execução
 **When** faço `GET /health`
 **Then** recebo `200` com um corpo simples de status (ex.: `{ "status": "ok" }`)
-**And** existe `ecosystem.config.cjs` (PM2) que permite subir o processo na VPS atrás do proxy reverso existente.
+**And** existe um `Dockerfile` (Node 24) que permite publicar o serviço como app no **Easypanel** (mesma VPS Hostinger da Evolution), que cuida de build, SSL/HTTPS e proxy reverso automaticamente; a porta do Express é exposta para o Easypanel rotear o subdomínio → `/webhook`.
 
 ### Story 1.2: Persistência do estado de conversa (Supabase)
 

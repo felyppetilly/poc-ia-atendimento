@@ -198,11 +198,12 @@ OpenAI Agents SDK (`@openai/agents`) — definição de agente, function tools (
 
 ### Infrastructure & Deployment
 
-**Host:** mesma VPS onde a Evolution API já roda (URL pública estável, sem túnel).
-**Runtime:** Node 24 LTS; processo gerenciado por PM2 ou container Docker ao lado da Evolution.
-**Proxy reverso:** rota/subdomínio no nginx/Caddy existente apontando p/ a porta do serviço (`/webhook`).
+**Host:** mesma VPS (Hostinger) gerenciada pelo **Easypanel**, onde a Evolution API já roda como serviço. O Easypanel (Docker + Traefik por baixo) provê **proxy reverso, SSL/HTTPS (Let's Encrypt) e mapeamento de domínio automaticamente** — sem nginx/Caddy/PM2 configurados na mão.
+**Runtime / processo:** Node 24 LTS **conteinerizado** (Dockerfile fixando a versão); o Easypanel gerencia build, ciclo de vida e restart do container ao lado da Evolution.
+**Deploy:** app criado no Easypanel a partir do repositório GitHub (`github.com/felyppetilly/poc-ia-atendimento`); build automático a cada push (ou manual). **Segredos/env vars** configurados na tela Environment do Easypanel (não em `.env` no servidor). Subdomínio com SSL automático → webhook em `https://<subdominio>/webhook`, cadastrado na instância da Evolution.
+**Rede:** Evolution e o serviço, no mesmo Easypanel, comunicam-se pela rede interna do Docker.
 **Timezone:** America/Sao_Paulo em toda a lógica de slots e nas chamadas Graph (`Prefer: outlook.timezone`, `dateTime`+`timeZone`).
-**CI/CD:** não necessário p/ POC (deploy manual / git pull). Logging em console + tracing OpenAI.
+**CI/CD:** não necessário p/ POC (build no Easypanel a partir do GitHub). Logging em console + tracing OpenAI.
 
 ### Decision Impact Analysis
 
@@ -268,7 +269,7 @@ src/
     appointment-repo.ts
   types.ts
 ```
-- Sem build na POC: `tsx watch src/server.ts` em dev; PM2 em prod.
+- Sem transpile na POC: `tsx watch src/server.ts` em dev; em prod, container Node executando `tsx` (sem build step), gerenciado pelo Easypanel.
 - Lógica de negócio (slots, briefing) fica em `domain/` — não dentro das tools (tools só orquestram).
 
 ### Format Patterns
@@ -326,7 +327,7 @@ poc-ia-atendimento/
 ├── .env                       # segredos reais (NÃO versionar)
 ├── .env.example               # template das variáveis
 ├── .gitignore
-├── ecosystem.config.cjs       # PM2 (deploy na VPS)
+├── Dockerfile                 # imagem Node 24 (deploy via Easypanel)
 ├── supabase/
 │   └── migrations/
 │       └── 0001_init.sql       # conversations, messages, appointments
@@ -424,7 +425,7 @@ WhatsApp → Evolution → `/webhook` → fila por telefone → agente (lê `con
 
 **Dev:** `npm run dev` → `tsx watch src/server.ts`; webhook exposto pela URL pública da VPS (mesma da Evolution) ou subdomínio.
 **Build:** sem transpile na POC (tsx executa TS direto).
-**Deploy:** VPS via PM2 (`ecosystem.config.cjs`) ou container Docker ao lado da Evolution; proxy reverso (nginx/Caddy) roteia `/webhook` → porta do serviço. Migrations aplicadas via Supabase CLI/MCP.
+**Deploy:** app no Easypanel (mesma VPS Hostinger da Evolution) a partir do repo GitHub; o Easypanel faz build do `Dockerfile`, roteia o subdomínio → `/webhook` e provê SSL automaticamente. Migrations aplicadas via Supabase CLI/MCP.
 
 ## Architecture Validation Results
 
