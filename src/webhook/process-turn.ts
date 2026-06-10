@@ -32,6 +32,18 @@ export async function processTurn(msg: InboundMessage): Promise<void> {
   }
 
   // Envia ao WhatsApp e SÓ então persiste a resposta (AC3 da 1.3: persistir os dois lados).
-  await evolutionClient.sendText(phone, reply);
-  await messageRepo.add({ conversationId: conversation.id, role: 'assistant', content: reply });
+  // Persistimos só o que foi REALMENTE entregue: se o envio falhar, não gravamos a resposta
+  // (mantém o histórico fiel ao que o Cliente viu). Se a gravação falhar APÓS o envio, logamos
+  // o dessync explicitamente em vez de deixar a fila engolir o erro de forma genérica.
+  try {
+    await evolutionClient.sendText(phone, reply);
+  } catch (err) {
+    console.error(`[webhook] falha ao ENVIAR resposta para ${maskPhone(phone)} (resposta não persistida):`, err);
+    return;
+  }
+  try {
+    await messageRepo.add({ conversationId: conversation.id, role: 'assistant', content: reply });
+  } catch (err) {
+    console.error(`[webhook] resposta ENVIADA mas NÃO persistida para ${maskPhone(phone)} — histórico dessincronizado:`, err);
+  }
 }

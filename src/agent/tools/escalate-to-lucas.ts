@@ -57,12 +57,20 @@ export const escalateToLucas = tool({
       `Motivo: ${reason ?? 'fallback'}\n` +
       `Resumo: ${summary}`;
 
-    try {
-      await evolutionClient.sendText(config.lucasWhatsapp, mensagem);
-    } catch (err) {
-      // Falha ao notificar o Lucas não vaza ao Cliente; não marca escalated (permite nova tentativa).
-      console.error(`[tool:escalateToLucas] falha ao notificar o Lucas (${maskPhone(config.lucasWhatsapp)}):`, err);
-      return { ok: false, reason: 'falha ao notificar' };
+    // Notifica o Lucas com 1 retry simples (cobre instabilidade transitória da Evolution).
+    let notified = false;
+    for (let attempt = 1; attempt <= 2 && !notified; attempt++) {
+      try {
+        await evolutionClient.sendText(config.lucasWhatsapp, mensagem);
+        notified = true;
+      } catch (err) {
+        console.error(`[tool:escalateToLucas] tentativa ${attempt}/2 de notificar o Lucas (${maskPhone(config.lucasWhatsapp)}) falhou:`, err);
+      }
+    }
+    if (!notified) {
+      // NÃO marca escalated (permite nova tentativa) e sinaliza ao agente para NÃO prometer
+      // contato — senão o Cliente recebe uma promessa falsa e o lead se perde em silêncio.
+      return { ok: false, reason: 'falha ao notificar', retryable: true };
     }
 
     await conversationRepo.update(ctx.conversationId, { status: 'escalated' });

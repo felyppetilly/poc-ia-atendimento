@@ -2,7 +2,7 @@ import { run, withTrace, OutputGuardrailTripwireTriggered } from '@openai/agents
 import type { AgentInputItem } from '@openai/agents';
 import { preAtendimentoAgent } from './pre-atendimento.js';
 import { conversationRepo } from '../repos/conversation-repo.js';
-import type { Message, TurnContext } from '../types.js';
+import type { Conversation, Message, TurnContext } from '../types.js';
 import { maskPhone } from '../util.js';
 
 /**
@@ -27,6 +27,23 @@ function toInputItems(messages: Message[]): AgentInputItem[] {
 }
 
 /**
+ * Resume o estado PERSISTIDO da conversa (fase + dados já coletados) numa nota de sistema.
+ * Injetada no FIM do input (recomendação OpenAI: "dynamic context near the end") para o agente
+ * não re-perguntar dados que já estão no banco mas saíram da janela de histórico (20 msgs).
+ */
+function buildStateNote(c: Conversation): string {
+  const has = (v?: string) => (v ? '✓' : '✗');
+  const col = c.collected ?? {};
+  return [
+    '# Estado atual desta conversa (uso interno — NÃO recite ao Cliente)',
+    `Fase: ${c.status}`,
+    `Tipo de demanda: ${c.demandType ?? 'ainda não confirmado'}`,
+    `Já coletado → nome: ${has(col.name)} | e-mail: ${has(col.email)} | resumo do caso: ${has(col.caseSummary)} | preferência de horário: ${has(col.timePreference)}`,
+    'Não peça de novo o que já está marcado com ✓. Continue de onde a conversa parou.',
+  ].join('\n');
+}
+
+/**
  * Roda um turno do agente: carrega o histórico do telefone (que JÁ inclui a mensagem
  * atual do Cliente, persistida antes em processTurn), roda o agente e devolve o texto.
  * Trata o tripwire do guardrail jurídico, substituindo por um redirecionamento seguro.
@@ -42,6 +59,9 @@ export async function runTurn(phone: string, inboundText: string): Promise<strin
     loaded && loaded.messages.length > 0
       ? toInputItems(loaded.messages)
       : [{ role: 'user', content: inboundText }];
+
+  // Nota de estado persistido no FIM do input — evita re-perguntar dados já coletados.
+  input.push({ role: 'system', content: buildStateNote(conversation) });
 
   // Contexto do turno: permite às tools (recordDemandType/escalateToLucas) saber qual conversa atualizar.
   const context: TurnContext = { conversationId: conversation.id, phone };

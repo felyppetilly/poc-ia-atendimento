@@ -72,7 +72,10 @@ export function handleWebhook(req: Request, res: Response): void {
   // Ack imediato — o turno roda de forma assíncrona depois.
   res.sendStatus(200);
 
-  if (!loggedRawOnce) {
+  // Loga o primeiro payload bruto APENAS fora de produção (Task 8: conferir o formato real
+  // da instância). Em produção o corpo cru contém PII (telefone + texto da mensagem), então
+  // fica desligado — o resto do código já mascara o telefone via maskPhone.
+  if (!loggedRawOnce && config.nodeEnv !== 'production') {
     loggedRawOnce = true;
     console.log('[webhook] primeiro payload bruto recebido:', JSON.stringify(req.body));
   }

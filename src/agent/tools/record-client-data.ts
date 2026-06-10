@@ -1,6 +1,6 @@
 import { tool } from '@openai/agents';
 import { z } from 'zod';
-import type { TurnContext, CollectedData } from '../../types.js';
+import type { TurnContext, CollectedData, ConversationStatus } from '../../types.js';
 import { conversationRepo } from '../../repos/conversation-repo.js';
 
 /**
@@ -53,7 +53,12 @@ export const recordClientData = tool({
       if (!c.email) missing.push('email');
       if (!c.caseSummary) missing.push('caseSummary');
 
-      if (missing.length === 0 && updated.status !== 'scheduling') {
+      // Gate: só avança para `scheduling` a partir de uma fase INICIAL. Nunca sobrescreve
+      // um status já encaminhado/avançado (escalated/scheduling/confirming/scheduled) — isso
+      // "des-escalaria" uma conversa que um humano assumiu. Exigir uma fase inicial também
+      // evita pular a triagem (greeting→scheduling com demandType nulo).
+      const ADVANCEABLE: ConversationStatus[] = ['greeting', 'triaging', 'collecting'];
+      if (missing.length === 0 && ADVANCEABLE.includes(updated.status)) {
         await conversationRepo.update(ctx.conversationId, { status: 'scheduling' });
       }
 

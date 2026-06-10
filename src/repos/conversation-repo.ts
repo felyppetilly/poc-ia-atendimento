@@ -1,6 +1,6 @@
 import { supabase } from '../integrations/supabase-client.js';
 import type { Conversation, Message, CollectedData } from '../types.js';
-import { rowToMessage } from './message-repo.js';
+import { messageRepo } from './message-repo.js';
 
 /**
  * Repositório de conversas. ÚNICA porta de acesso à tabela `conversations`.
@@ -129,16 +129,8 @@ export const conversationRepo = {
     const conversation = await this.findByPhone(phone);
     if (!conversation) return null;
 
-    // Pega as `limit` mensagens mais recentes e devolve em ordem cronológica (asc).
-    const { data, error } = await supabase
-      .from('messages')
-      .select()
-      .eq('conversation_id', conversation.id)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-    if (error) throw new Error(`[conversation-repo] findByPhoneWithMessages falhou: ${error.message}`);
-
-    const messages = (data ?? []).map(rowToMessage).reverse();
+    // Reutiliza a leitura canônica de mensagens (mesma query: recentes em ordem cronológica).
+    const messages = await messageRepo.listRecent(conversation.id, limit);
     return { conversation, messages };
   },
 };

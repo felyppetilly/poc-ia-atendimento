@@ -43,6 +43,9 @@ const envSchema = z.object({
   BUSINESS_HOURS_END: z.coerce.number().int().min(1).max(24).default(18),
   MAX_SLOTS: z.coerce.number().int().positive().default(3),
   TIMEZONE: z.string().default('America/Sao_Paulo'),
+}).refine((d) => d.BUSINESS_HOURS_START < d.BUSINESS_HOURS_END, {
+  message: 'BUSINESS_HOURS_START deve ser menor que BUSINESS_HOURS_END (janela inválida)',
+  path: ['BUSINESS_HOURS_END'],
 });
 
 // Trata variáveis vazias no .env (ex.: `OPENAI_API_KEY=`) como AUSENTES,
