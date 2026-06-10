@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-08
-last_updated: 2026-06-08
+last_updated: 2026-06-10
 project: POC_IA_Atendimento
 project_key: NOKEY
 tracking_system: file-system
@@ -43,21 +43,21 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 
 development_status:
   # Epic 1: Pre-atendimento conversacional e encaminhamento
-  epic-1: in-progress
-  1-1-inicializacao-do-projeto-e-healthcheck-na-vps: review
-  1-2-persistencia-do-estado-de-conversa-supabase: review
-  1-3-recebimento-de-mensagem-do-whatsapp-e-resposta-round-trip: review
-  1-4-saudacao-e-abertura-pelo-agente-com-guardrail-juridico: review
-  1-5-triagem-do-tipo-de-demanda: review
-  1-6-coleta-conversacional-de-dados-do-cliente: review
-  1-7-encaminhamento-ao-lucas-fallback: review
+  epic-1: done
+  1-1-inicializacao-do-projeto-e-healthcheck-na-vps: done
+  1-2-persistencia-do-estado-de-conversa-supabase: done
+  1-3-recebimento-de-mensagem-do-whatsapp-e-resposta-round-trip: done
+  1-4-saudacao-e-abertura-pelo-agente-com-guardrail-juridico: done
+  1-5-triagem-do-tipo-de-demanda: done
+  1-6-coleta-conversacional-de-dados-do-cliente: done
+  1-7-encaminhamento-ao-lucas-fallback: done
   epic-1-retrospective: optional
 
   # Epic 2: Agendamento, Convite e Briefing
-  epic-2: backlog
-  2-1-provisionar-infraestrutura-microsoft-365-e-cliente-graph-app-only: backlog
-  2-2-escolha-do-formato-da-reuniao: backlog
-  2-3-consulta-de-disponibilidade-e-oferta-de-slots: backlog
-  2-4-confirmacao-do-horario: backlog
-  2-5-criacao-do-convite-trava-da-agenda-e-briefing: backlog
+  epic-2: in-progress
+  2-1-provisionar-infraestrutura-microsoft-365-e-cliente-graph-app-only: review
+  2-2-escolha-do-formato-da-reuniao: review
+  2-3-consulta-de-disponibilidade-e-oferta-de-slots: review
+  2-4-confirmacao-do-horario: review
+  2-5-criacao-do-convite-trava-da-agenda-e-briefing: review
   epic-2-retrospective: optional
