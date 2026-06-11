@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { z } from 'zod';
+import { digitsOnly } from './util.js';
 
 /**
  * Fonte ÚNICA de configuração da POC.
@@ -43,6 +44,10 @@ const envSchema = z.object({
   BUSINESS_HOURS_END: z.coerce.number().int().min(1).max(24).default(18),
   MAX_SLOTS: z.coerce.number().int().positive().default(3),
   TIMEZONE: z.string().default('America/Sao_Paulo'),
+
+  // Lista de permitidos (TESTE/DEMO): se preenchida, a IA SÓ responde a esses números
+  // (separados por vírgula). Vazia = responde a todos. Protege números pessoais. Ver util.phoneAllowed.
+  ALLOWED_PHONES: z.string().optional(),
 }).refine((d) => d.BUSINESS_HOURS_START < d.BUSINESS_HOURS_END, {
   message: 'BUSINESS_HOURS_START deve ser menor que BUSINESS_HOURS_END (janela inválida)',
   path: ['BUSINESS_HOURS_END'],
@@ -96,4 +101,9 @@ export const config = {
   businessHoursEnd: env.BUSINESS_HOURS_END,
   maxSlots: env.MAX_SLOTS,
   timezone: env.TIMEZONE,
+
+  // Números (só dígitos) que podem falar com a IA. Vazio = todos. Protege número pessoal.
+  allowedPhones: env.ALLOWED_PHONES
+    ? env.ALLOWED_PHONES.split(',').map((s) => digitsOnly(s)).filter((s) => s.length > 0)
+    : [],
 } as const;

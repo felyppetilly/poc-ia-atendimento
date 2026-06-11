@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type { InboundMessage } from '../types.js';
 import { config } from '../config.js';
-import { digitsOnly, maskPhone } from '../util.js';
+import { digitsOnly, maskPhone, phoneAllowed } from '../util.js';
 import { enqueue } from './queue.js';
 import { processTurn } from './process-turn.js';
 
@@ -82,6 +82,13 @@ export function handleWebhook(req: Request, res: Response): void {
 
   const msg = normalize(req.body);
   if (!msg) return; // evento ignorado (não é mensagem de texto de Cliente)
+
+  // Lista de permitidos (teste/demo): se configurada, a IA SÓ responde a esses números.
+  // Protege o número pessoal de responder todos os contatos. Vazia = responde a todos.
+  if (!phoneAllowed(msg.phone, config.allowedPhones)) {
+    console.log(`[webhook] ${maskPhone(msg.phone)} fora da lista de permitidos — ignorado`);
+    return;
+  }
 
   console.log(`[webhook] mensagem de ${maskPhone(msg.phone)} enfileirada`);
   enqueue(msg.phone, () => processTurn(msg));
