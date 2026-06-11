@@ -5,9 +5,12 @@ FROM node:24-slim
 
 WORKDIR /app
 
-# Instala dependências primeiro (camada cacheável)
+# Instala dependências primeiro (camada cacheável).
+# Usamos `npm install` (não `npm ci`): o @openai/agents declara `hono` como dependência
+# transitiva opcional que o npm não materializa no lock — `npm ci` (estrito) falharia, mas
+# o app roda sem ela. `npm install` resolve com tolerância. (POC: build reprodutível não é meta.)
 COPY package*.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund
 
 # Copia o restante do código
 COPY . .
